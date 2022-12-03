@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	f, _ := os.Open("input.txt")
 	scanner := bufio.NewScanner(f)
 	var rucksacks []string
@@ -17,7 +16,6 @@ func main() {
 
 	part1(rucksacks)
 	part2(rucksacks)
-
 }
 
 func part2(rucksacks []string) {
@@ -31,8 +29,11 @@ func part2(rucksacks []string) {
 		groups[i/3] = append(groups[i/3], r)
 	}
 
-	fmt.Println(groups[0])
-
+	total := 0
+	for _, g := range groups {
+		total += priority(findCommonChar(g))
+	}
+	fmt.Printf("Part 1: %d\n", total)
 }
 
 func part1(rucksacks []string) {
@@ -40,23 +41,41 @@ func part1(rucksacks []string) {
 
 	for _, r := range rucksacks {
 		left, right := r[:len(r)/2], r[len(r)/2:]
-
-		// Find the characters that appear in both compartments
-		seen := map[byte]bool{}
-		for i := range left {
-			seen[left[i]] = true
-		}
-
-		var common byte
-		for i := range right {
-			if _, ok := seen[right[i]]; ok {
-				common = right[i]
-			}
-		}
-		total += priority(common)
+		total += priority(findCommonChar([]string{left, right}))
 	}
 
 	fmt.Printf("Part 1: %d\n", total)
+}
+
+// findCommonChar will find the single byte that is common across the input strings
+// The puzzle input is guaranteed to have only one common character
+func findCommonChar(inputs []string) byte {
+	common := map[byte]struct{}{}
+
+	// create the first hashmap
+	for i := range inputs[0] {
+		common[inputs[0][i]] = struct{}{}
+	}
+
+	var next map[byte]struct{}
+
+	for i := 1; i < len(inputs); i++ {
+		// Initialise the next seen map to be empty
+		next = map[byte]struct{}{}
+		for j, _ := range inputs[i] {
+			b := inputs[i][j]
+			// If this character is in the previous map, its common to the previous inputs
+			if _, ok := common[b]; ok {
+				next[b] = struct{}{}
+			}
+		}
+		common = next
+	}
+	out := []byte{}
+	for k := range common {
+		out = append(out, k)
+	}
+	return out[0]
 }
 
 func priority(b byte) int {
